@@ -173,3 +173,54 @@ Elixir.extend('bowerImages', function(outputDir, options) {
         return merge.apply(this, tasks);
     });
 });
+
+///testing
+Elixir.extend('bowerCss', function(outputDir, options) {
+    // Options were provided on the outputDir parameter
+    if (typeof outputDir == 'object') {
+        options = outputDir;
+        outputDir = null;
+    }
+
+    options = typeof options == 'undefined' ? {camelCase: false} : options;
+
+    var paths = new Elixir.GulpPaths()
+        .output(outputDir || config.get('assets.css.folder') + '/vendor');
+
+    new Elixir.Task('bowerCss', function () {
+        var bower_components = require('bower-files')(options);
+        var getMinifiedScripts = function (path, index, arr) {
+                var newPath = path.replace(/.([^.]+)$/g, '.min.$1');
+                return exists( newPath ) ? newPath : path;
+            },
+            isNotMinified = function(file) {
+                var filename = file.history[file.history.length - 1];
+                return !(/\.min\.css$/.test(filename));
+            },
+            uglifyScripts = function(file) {
+                return isNotMinified(file) && config.production;
+            },
+            jsfiles = bower_components.ext('css').deps,
+            tasks = [],
+            createFolder;
+
+        for (var packageName in jsfiles) {
+            if (jsfiles[packageName].length) {
+                jsfiles[packageName].map(getMinifiedScripts);
+
+                createFolder = jsfiles[packageName].length > 1;
+
+                tasks.push(
+                    gulp.src(jsfiles[packageName])
+                        .pipe(gulpif(uglifyScripts, uglify()))
+                        .pipe(gulpif(createFolder, rename({dirname: packageName.replace(/\.css$/, '')})))
+                        .pipe(gulpif(!createFolder, rename({basename: packageName.replace(/\.css$/, '')})))
+                        .pipe(filenames(packageName.replace(/\.css$/, '')))
+                        .pipe(gulp.dest(paths.output.path))
+                );
+            }
+        }
+
+        return merge.apply(this, tasks);
+    });
+});
