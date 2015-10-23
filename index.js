@@ -200,19 +200,18 @@ Elixir.extend('bowerCss', function(outputDir, options) {
             uglifyScripts = function(file) {
                 return isNotMinified(file) && config.production;
             },
-            jsfiles = bower_components.ext('css').deps,
+            cssfiles = bower_components.ext('css').deps,
             tasks = [],
             createFolder;
 
-        for (var packageName in jsfiles) {
-            if (jsfiles[packageName].length) {
-                jsfiles[packageName].map(getMinifiedScripts);
+        for (var packageName in cssfiles) {
+            if (cssfiles[packageName].length) {
+                cssfiles[packageName].map(getMinifiedScripts);
 
-                createFolder = jsfiles[packageName].length > 1;
+                createFolder = cssfiles[packageName].length > 1;
 
                 tasks.push(
-                    gulp.src(jsfiles[packageName])
-                        .pipe(gulpif(uglifyScripts, uglify()))
+                    gulp.src(cssfiles[packageName])
                         .pipe(gulpif(createFolder, rename({dirname: packageName.replace(/\.css$/, '')})))
                         .pipe(gulpif(!createFolder, rename({basename: packageName.replace(/\.css$/, '')})))
                         .pipe(filenames(packageName.replace(/\.css$/, '')))
